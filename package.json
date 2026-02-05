@@ -1,0 +1,50 @@
+{
+  "name": "edhrec-planarbridge",
+  "version": "1.0.0",
+  "description": "EDHRECのカードページに日本のMTGショップへのリンクを追加するブラウザ拡張機能",
+  "type": "module",
+  "scripts": {
+    "dev": "NODE_OPTIONS='--localstorage-file=.node-storage' wxt",
+    "dev:firefox": "NODE_OPTIONS='--localstorage-file=.node-storage' wxt -b firefox",
+    "build": "NODE_OPTIONS='--localstorage-file=.node-storage' wxt build",
+    "build:firefox": "NODE_OPTIONS='--localstorage-file=.node-storage' wxt build -b firefox",
+    "zip": "NODE_OPTIONS='--localstorage-file=.node-storage' wxt zip",
+    "zip:firefox": "NODE_OPTIONS='--localstorage-file=.node-storage' wxt zip -b firefox",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "keywords": [
+    "mtg",
+    "edhrec",
+    "browser-extension",
+    "wxt"
+  ],
+  "author": "",
+  "license": "MIT",
+  "packageManager": "pnpm@10.28.2",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "dependencies": {
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "wxt": "^0.20.13",
+    "zustand": "^5.0.11"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.1",
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/chrome": "^0.1.36",
+    "@types/react": "^19.2.11",
+    "@types/react-dom": "^19.2.3",
+    "@wxt-dev/module-react": "^1.1.5",
+    "autoprefixer": "^10.4.24",
+    "playwright": "^1.58.1",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
