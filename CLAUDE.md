@@ -55,4 +55,4 @@ CardPrices_prices → a[href*="cardmarket.com"] → searchString=Sol+Ring → "S
 
 - `.claude/rules/` - コーディング規約、実装パターン、テスト規約
 - `.claude/skills/` - DOM構造、API仕様、テストガイド（参照用）
-- `docs/` - 詳細な技術仕様書
+- `docs/external-site-policy.md` - 外部サイトアクセスポリシー
