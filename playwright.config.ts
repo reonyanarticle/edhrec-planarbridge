@@ -1,6 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
 import path from 'path';
 
+/**
+ * Playwright E2Eテスト設定
+ *
+ * 外部サイトへの負荷を避けるため、テストはローカルモックHTMLを使用します。
+ * 詳細: docs/external-site-policy.md
+ */
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: false, // 拡張機能テストは並列実行しない
@@ -9,7 +15,7 @@ export default defineConfig({
   workers: 1, // 拡張機能テストは1ワーカーのみ
   reporter: 'html',
   use: {
-    baseURL: 'https://edhrec.com',
+    // baseURLを設定しない（ローカルファイルを使用するため）
     trace: 'on-first-retry',
   },
   projects: [
@@ -22,6 +28,7 @@ export default defineConfig({
           args: [
             `--disable-extensions-except=${path.join(process.cwd(), 'output/chrome-mv3')}`,
             `--load-extension=${path.join(process.cwd(), 'output/chrome-mv3')}`,
+            '--allow-file-access-from-files',
           ],
         },
       },

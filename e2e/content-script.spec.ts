@@ -1,28 +1,31 @@
-import { test, expect } from './fixtures';
+import { test, expect, loadMockPageWithContentScript } from './fixtures';
 
 /**
- * Content Script E2Eテスト
+ * Content Script E2Eテスト（モック版）
  *
- * 注意: これらのテストは拡張機能をロードした状態で実行する必要があります。
+ * 外部サイト（edhrec.com, hareruyamtg.com）への負荷を避けるため、
+ * ローカルのモックHTMLを使用してテストを実行します。
+ *
+ * 詳細: docs/external-site-policy.md
+ *
  * 事前に `pnpm build` を実行して `output/chrome-mv3` を生成してください。
  *
  * テスト実行コマンド:
  * pnpm build && pnpm test:e2e
  */
 
-test.describe('Content Script E2E', () => {
+test.describe('Content Script E2E（モック版）', () => {
   test.beforeEach(async ({ page }) => {
-    // ネットワークの安定化のため、ページロードを待機
     await page.setViewportSize({ width: 1280, height: 720 });
   });
 
-  test('カード詳細ページで晴れる屋リンクが表示される', async ({ page }) => {
-    await page.goto('/cards/sol-ring');
+  test('カード詳細ページで晴れる屋リンクが表示される', async ({ page, extensionId }) => {
+    await loadMockPageWithContentScript(page, 'card-page.html', extensionId);
 
-    // 価格エリアが表示されるまで待機
-    await page.waitForSelector('[class*="CardPrices_prices"]', { timeout: 10000 });
+    // 価格エリアが表示されていることを確認
+    await expect(page.locator('[class*="CardPrices_prices"]')).toBeVisible();
 
-    // 晴れる屋リンクが追加されるまで待機（拡張機能の動作を待つ）
+    // 晴れる屋リンクが追加されていることを確認
     const hareruyaLink = page.locator('[data-planarbridge="true"]').first();
     await expect(hareruyaLink).toBeVisible({ timeout: 5000 });
 
@@ -35,40 +38,40 @@ test.describe('Content Script E2E', () => {
     expect(href).toContain('Sol%20Ring');
   });
 
-  test('統率者ページで晴れる屋リンクが表示される', async ({ page }) => {
-    await page.goto('/commanders/the-ur-dragon');
+  test('統率者ページで晴れる屋リンクが表示される', async ({ page, extensionId }) => {
+    await loadMockPageWithContentScript(page, 'commander-page.html', extensionId);
 
-    // 価格エリアが表示されるまで待機
-    await page.waitForSelector('[class*="CardPrices_prices"]', { timeout: 10000 });
+    // 価格エリアが表示されていることを確認
+    await expect(page.locator('[class*="CardPrices_prices"]')).toBeVisible();
 
-    // 晴れる屋リンクが追加されるまで待機
+    // 晴れる屋リンクが追加されていることを確認
     const hareruyaLink = page.locator('[data-planarbridge="true"]').first();
     await expect(hareruyaLink).toBeVisible({ timeout: 5000 });
 
     // リンクが正しいURLを持つことを確認
     const href = await hareruyaLink.getAttribute('href');
     expect(href).toContain('hareruyamtg.com');
+    expect(href).toContain('The%20Ur-Dragon');
   });
 
-  test('カードリストページで複数の晴れる屋リンクが表示される', async ({ page }) => {
-    await page.goto('/commanders');
+  test('カードリストページで複数の晴れる屋リンクが表示される', async ({ page, extensionId }) => {
+    await loadMockPageWithContentScript(page, 'card-list-page.html', extensionId);
 
-    // 価格エリアが表示されるまで待機
-    await page.waitForSelector('[class*="CardPrices_prices"]', { timeout: 10000 });
+    // 価格エリアが表示されていることを確認
+    await expect(page.locator('[class*="CardPrices_prices"]').first()).toBeVisible();
 
-    // 複数の晴れる屋リンクが追加されるまで待機
+    // 複数の晴れる屋リンクが追加されていることを確認
     const hareruyaLinks = page.locator('[data-planarbridge="true"]');
     await expect(hareruyaLinks.first()).toBeVisible({ timeout: 5000 });
 
-    // 複数のリンクが存在することを確認
+    // 複数のリンクが存在することを確認（モックには4つのカードがある）
     const count = await hareruyaLinks.count();
     expect(count).toBeGreaterThanOrEqual(1);
+    expect(count).toBe(4); // Sol Ring, Command Tower, Arcane Signet, Lightning Greaves
   });
 
-  test('SPA遷移後も正しいカード名でリンクが更新される', async ({ page }) => {
-    // 最初のカードページにアクセス
-    await page.goto('/cards/sol-ring');
-    await page.waitForSelector('[class*="CardPrices_prices"]', { timeout: 10000 });
+  test('SPA遷移後も正しいカード名でリンクが更新される', async ({ page, extensionId }) => {
+    await loadMockPageWithContentScript(page, 'card-page.html', extensionId);
 
     // 晴れる屋リンクが表示されることを確認
     let hareruyaLink = page.locator('[data-planarbridge="true"]').first();
@@ -78,9 +81,30 @@ test.describe('Content Script E2E', () => {
     let href = await hareruyaLink.getAttribute('href');
     expect(href).toContain('Sol%20Ring');
 
-    // 別のカードページに遷移（SPA遷移）
-    await page.goto('/cards/command-tower');
-    await page.waitForSelector('[class*="CardPrices_prices"]', { timeout: 10000 });
+    // SPA遷移をシミュレート（モックHTMLのnavigation関数を呼び出し）
+    await page.evaluate(() => {
+      // 既存の晴れる屋リンクを削除（実際のSPA遷移では新しいコンテナが生成される）
+      const existingLinks = document.querySelectorAll('[data-planarbridge]');
+      existingLinks.forEach((link) => link.remove());
+
+      // Cardmarketリンクを更新
+      const cardmarketLink = document.querySelector('a[href*="cardmarket.com"]') as HTMLAnchorElement;
+      if (cardmarketLink) {
+        cardmarketLink.href =
+          'https://www.cardmarket.com/en/Magic/Products/Search?searchString=Command+Tower';
+      }
+
+      // MutationObserverをトリガー
+      const container = document.querySelector('[class*="CardPrices_prices"]');
+      if (container) {
+        const temp = document.createElement('span');
+        container.appendChild(temp);
+        setTimeout(() => temp.remove(), 10);
+      }
+    });
+
+    // MutationObserverのデバウンス時間を待つ
+    await page.waitForTimeout(500);
 
     // 新しいカードの晴れる屋リンクが表示されることを確認
     hareruyaLink = page.locator('[data-planarbridge="true"]').first();
@@ -92,30 +116,23 @@ test.describe('Content Script E2E', () => {
     expect(href).not.toContain('Sol%20Ring');
   });
 
-  test('リンクをクリックすると新しいタブで晴れる屋の検索ページが開く', async ({
-    page,
-    context,
-  }) => {
-    await page.goto('/cards/sol-ring');
-    await page.waitForSelector('[class*="CardPrices_prices"]', { timeout: 10000 });
+  test('リンクのhrefが晴れる屋の検索ページを指している', async ({ page, extensionId }) => {
+    await loadMockPageWithContentScript(page, 'card-page.html', extensionId);
 
     // 晴れる屋リンクが表示されるまで待機
     const hareruyaLink = page.locator('[data-planarbridge="true"]').first();
     await expect(hareruyaLink).toBeVisible({ timeout: 5000 });
 
-    // 新しいタブが開くことを確認
-    const [newPage] = await Promise.all([context.waitForEvent('page'), hareruyaLink.click()]);
-
-    // 新しいタブのURLを確認
-    await newPage.waitForLoadState();
-    expect(newPage.url()).toContain('hareruyamtg.com');
+    // リンクのURLを確認（実際にクリックして遷移するのではなく、hrefの値をチェック）
+    const href = await hareruyaLink.getAttribute('href');
+    expect(href).toBe('https://www.hareruyamtg.com/ja/products/search?product=Sol%20Ring');
   });
 
   test('リンクにtarget="_blank"とrel="noopener noreferrer"が設定されている', async ({
     page,
+    extensionId,
   }) => {
-    await page.goto('/cards/sol-ring');
-    await page.waitForSelector('[class*="CardPrices_prices"]', { timeout: 10000 });
+    await loadMockPageWithContentScript(page, 'card-page.html', extensionId);
 
     const hareruyaLink = page.locator('[data-planarbridge="true"]').first();
     await expect(hareruyaLink).toBeVisible({ timeout: 5000 });
@@ -125,20 +142,25 @@ test.describe('Content Script E2E', () => {
     await expect(hareruyaLink).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
-  test('同じコンテナに重複してリンクが追加されない', async ({ page }) => {
-    await page.goto('/cards/sol-ring');
-    await page.waitForSelector('[class*="CardPrices_prices"]', { timeout: 10000 });
+  test('同じコンテナに重複してリンクが追加されない', async ({ page, extensionId }) => {
+    await loadMockPageWithContentScript(page, 'card-page.html', extensionId);
 
     // 晴れる屋リンクが表示されるまで待機
     await expect(page.locator('[data-planarbridge="true"]').first()).toBeVisible({ timeout: 5000 });
 
-    // ページを少しスクロールしてMutationObserverをトリガー
+    // MutationObserverを複数回トリガー
     await page.evaluate(() => {
-      window.scrollBy(0, 100);
-      window.scrollBy(0, -100);
+      const container = document.querySelector('[class*="CardPrices_prices"]');
+      if (container) {
+        for (let i = 0; i < 5; i++) {
+          const temp = document.createElement('span');
+          container.appendChild(temp);
+          temp.remove();
+        }
+      }
     });
 
-    // 少し待機してから確認
+    // デバウンス時間を待つ
     await page.waitForTimeout(500);
 
     // 各価格コンテナ内のリンク数を確認
@@ -150,6 +172,27 @@ test.describe('Content Script E2E', () => {
       const linksInContainer = container.locator('[data-planarbridge="true"]');
       const linkCount = await linksInContainer.count();
       expect(linkCount).toBeLessThanOrEqual(1);
+    }
+  });
+
+  test('各カードに対応する正しいURLが生成される', async ({ page, extensionId }) => {
+    await loadMockPageWithContentScript(page, 'card-list-page.html', extensionId);
+
+    // 全ての晴れる屋リンクが表示されるまで待機
+    const hareruyaLinks = page.locator('[data-planarbridge="true"]');
+    await expect(hareruyaLinks.first()).toBeVisible({ timeout: 5000 });
+
+    // 各カードのURLを確認
+    const expectedCards = ['Sol Ring', 'Command Tower', 'Arcane Signet', 'Lightning Greaves'];
+
+    const count = await hareruyaLinks.count();
+    expect(count).toBe(expectedCards.length);
+
+    for (let i = 0; i < count; i++) {
+      const link = hareruyaLinks.nth(i);
+      const href = await link.getAttribute('href');
+      const expectedCardName = expectedCards[i];
+      expect(href).toContain(encodeURIComponent(expectedCardName));
     }
   });
 });
