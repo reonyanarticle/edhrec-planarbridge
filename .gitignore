@@ -32,3 +32,7 @@ scripts/*.png
 
 # Node.js v25 localStorage workaround
 .node-storage
+.output
+output
+coverage
+EDHREC Planarbridge

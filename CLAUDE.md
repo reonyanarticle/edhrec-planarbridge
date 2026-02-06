@@ -6,7 +6,7 @@
 ## プロジェクト概要
 
 - **目的**: EDHRECでカードを閲覧中に、日本のショップで同じカードを検索できるリンクを追加
-- **対応ブラウザ**: Chrome / Firefox / Safari (iOS含む)
+- **対応ブラウザ**: Chrome / Firefox / Edge / Safari (iOS含む)
 - **フレームワーク**: WXT + React + TypeScript
 
 ## 技術スタック
@@ -18,11 +18,12 @@
 | 言語 | TypeScript |
 | 状態管理 | Zustand |
 | ビルド | Vite (WXT内蔵) |
+| テスト | Vitest + Playwright |
 | パッケージマネージャ | pnpm |
 
 ## ディレクトリ構成
 
-```
+```text
 /
 ├── entrypoints/           # WXTエントリポイント
 │   ├── content.tsx        # Content Script（EDHRECページに注入）
@@ -38,7 +39,12 @@
 ├── stores/                # Zustand ストア
 ├── assets/                # アイコン等の静的ファイル
 │
+├── e2e/                   # E2Eテスト（Playwright）
+├── docs/                  # ドキュメント
+│
 ├── wxt.config.ts          # WXT設定
+├── vitest.config.ts       # Vitest設定
+├── playwright.config.ts   # Playwright設定
 ├── tailwind.config.js     # Tailwind設定
 └── tsconfig.json          # TypeScript設定
 ```
@@ -47,22 +53,26 @@
 
 ```bash
 # 開発サーバー起動（HMR対応）
-pnpm dev
-
-# 特定ブラウザ向け開発
-pnpm dev:firefox
-pnpm dev:safari
+pnpm dev            # Chrome
+pnpm dev:firefox    # Firefox
+pnpm dev:edge       # Edge
 
 # ビルド
-pnpm build                    # Chrome (デフォルト)
-pnpm build --browser firefox
-pnpm build --browser safari
+pnpm build          # Chrome (デフォルト)
+pnpm build:firefox  # Firefox
+pnpm build:edge     # Edge
 
 # 型チェック
 pnpm typecheck
 
 # Lint
 pnpm lint
+
+# テスト
+pnpm test           # ユニットテスト（監視モード）
+pnpm test:run       # ユニットテスト（一回実行）
+pnpm test:coverage  # カバレッジ付きテスト
+pnpm test:e2e       # E2Eテスト（要事前ビルド）
 ```
 
 ## コア設計
@@ -71,7 +81,7 @@ pnpm lint
 
 価格コンテナ内のCardmarketリンクからカード名を抽出し、ショップの検索URLを生成する：
 
-```
+```text
 CardPrices_prices コンテナ
 ├── <a href="...cardmarket.com/...?searchString=Sol+Ring...">
 │                                              ~~~~~~~~~
@@ -152,7 +162,7 @@ export const SHOPS = {
   hareruya: {
     name: '晴れる屋',
     baseUrl: 'https://www.hareruyamtg.com/ja/products/search',
-    buildUrl: (cardName: string) => `${baseUrl}?cardname=${encodeURIComponent(cardName)}`,
+    buildUrl: (cardName: string) => `${baseUrl}?product=${encodeURIComponent(cardName)}`,
   },
   // 将来的に追加可能
   // cardshopSerra: { ... },
@@ -239,62 +249,37 @@ xcrun safari-web-extension-converter .output/safari-mv3
 
 iOS対応にはApple Developer アカウントが必要（無料アカウントでTestFlight配布は可能）。
 
-## Playwrightテスト
+※ `safari-web-extension-converter` を使用するには、Command Line Tools ではなく Xcode.app のインストールが必要です。
 
-### テスト方法
+## テスト
 
-Claude Code の Playwright MCP を使用してEDHRECのDOM構造と実装ロジックを検証する。
+### ユニットテスト（Vitest）
 
-### カード名抽出ロジックのテスト
-
-以下のJavaScriptをページ上で実行して、カード名抽出が正しく動作するか確認：
-
-```javascript
-(() => {
-  const priceContainers = document.querySelectorAll('[class*="CardPrices_prices"]');
-  const results = [];
-
-  priceContainers.forEach((container, index) => {
-    const cardmarketLink = container.querySelector('a[href*="cardmarket.com"]');
-    let cardName = null;
-
-    if (cardmarketLink) {
-      const href = cardmarketLink.getAttribute('href');
-      try {
-        const url = new URL(href);
-        const searchString = url.searchParams.get('searchString');
-        if (searchString) {
-          cardName = decodeURIComponent(searchString.replace(/\+/g, ' '));
-        }
-      } catch (e) {}
-    }
-
-    results.push({ index, cardName, hasCardmarketLink: !!cardmarketLink });
-  });
-
-  return { totalContainers: priceContainers.length, results };
-})();
+```bash
+pnpm test           # 監視モード
+pnpm test:run       # 一回実行
+pnpm test:coverage  # カバレッジ付き
+pnpm test:ui        # UIモード
 ```
 
-### テスト結果（2026-02-05）
+テスト対象：
+- `lib/url-utils.ts` - URL解析ロジック
+- `lib/shops.ts` - ショップ設定
+- `hooks/useUrlChange.ts` - URL変更監視
 
-| ページ | URL | 価格コンテナ数 | 抽出結果 |
-| ------ | --- | -------------- | -------- |
-| カード詳細 | `/cards/sol-ring` | 1 | ✅ "Sol Ring" |
-| 統率者詳細 | `/commanders/the-ur-dragon` | 1 | ✅ "The Ur-Dragon" |
-| 統率者リスト | `/commanders` | 3 | ✅ "The Ur-Dragon", "Edgar Markov", "Atraxa, Praetors' Voice" |
+### E2Eテスト（Playwright）
 
-### SPA遷移テスト
+```bash
+pnpm build && pnpm test:e2e
+```
 
-`/commanders` → `/commanders/the-ur-dragon` へのクリック遷移後も、正しく新しいページのカード名（"The Ur-Dragon"）が検出されることを確認。
+テスト対象：
+- カード詳細ページでの晴れる屋リンク表示
+- 統率者ページでの晴れる屋リンク表示
+- SPA遷移後のリンク更新
+- 重複防止の動作確認
 
-### テストで確認すべき項目
-
-1. **カード詳細ページ**: メインカードの価格エリアに晴れる屋リンクが表示される
-2. **統率者ページ**: 統率者カードの価格エリアに晴れる屋リンクが表示される
-3. **カードリストページ**: 各カードの価格エリアに晴れる屋リンクが表示される
-4. **SPA遷移**: ページ遷移後に正しいカード名でリンクが更新される
-5. **重複防止**: 同じコンテナに複数のリンクが追加されない（`data-planarbridge`属性でマーキング）
+詳細は `docs/testing.md` を参照。
 
 ## 参考リンク
 

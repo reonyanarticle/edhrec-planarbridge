@@ -12,6 +12,7 @@ EDHRECのカードページに日本のMTGショップ（晴れる屋）への�
 
 - Chrome
 - Firefox
+- Edge
 - Safari（iOS含む）
 
 ## インストール
@@ -28,10 +29,18 @@ EDHRECのカードページに日本のMTGショップ（晴れる屋）への�
 
 ### Firefox
 
-1. ビルド: `pnpm build --browser firefox`
+1. ビルド: `pnpm build:firefox`
 2. Firefox で `about:debugging#/runtime/this-firefox` を開く
 3. 「一時的なアドオンを読み込む」をクリック
-4. `.output/firefox-mv3/manifest.json` を選択
+4. `.output/firefox-mv2/manifest.json` を選択
+
+### Edge
+
+1. ビルド: `pnpm build:edge`
+2. Edge で `edge://extensions` を開く
+3. 「開発者モード」を有効化
+4. 「展開して読み込み」をクリック
+5. `.output/edge-mv3` フォルダを選択
 
 ### Safari
 
@@ -41,6 +50,8 @@ EDHRECのカードページに日本のMTGショップ（晴れる屋）への�
    xcrun safari-web-extension-converter .output/safari-mv3
    ```
 3. Xcode でビルド・実行
+
+※ Safari 対応には Xcode.app のインストールが必要です。
 
 ## 使い方
 
@@ -61,13 +72,36 @@ EDHRECのカードページに日本のMTGショップ（晴れる屋）への�
 pnpm install
 
 # 開発サーバー起動（HMR対応）
-pnpm dev
+pnpm dev          # Chrome
+pnpm dev:firefox  # Firefox
+pnpm dev:edge     # Edge
 
 # ビルド
-pnpm build
+pnpm build          # Chrome
+pnpm build:firefox  # Firefox
+pnpm build:edge     # Edge
 
 # 型チェック
 pnpm typecheck
+
+# Lint
+pnpm lint
+```
+
+## テスト
+
+```bash
+# ユニットテスト（監視モード）
+pnpm test
+
+# ユニットテスト（一回実行）
+pnpm test:run
+
+# カバレッジ付きテスト
+pnpm test:coverage
+
+# E2Eテスト（要事前ビルド）
+pnpm build && pnpm test:e2e
 ```
 
 ## 技術スタック
@@ -76,6 +110,8 @@ pnpm typecheck
 - React 19
 - TypeScript
 - Tailwind CSS
+- Vitest - ユニットテスト
+- Playwright - E2Eテスト
 
 ## ライセンス
 
