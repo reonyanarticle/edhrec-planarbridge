@@ -73,7 +73,15 @@ export default defineContentScript({
 
       link.innerHTML = `
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink: 0;">
-          <circle cx="12" cy="12" r="10"/>
+          <circle cx="12" cy="12" r="7"/>
+          <polygon points="12,0 10.5,3.5 13.5,3.5"/>
+          <polygon points="12,24 10.5,20.5 13.5,20.5"/>
+          <polygon points="0,12 3.5,10.5 3.5,13.5"/>
+          <polygon points="24,12 20.5,10.5 20.5,13.5"/>
+          <polygon points="3.51,3.51 6.04,5.1 5.1,6.04"/>
+          <polygon points="20.49,20.49 17.96,18.9 18.9,17.96"/>
+          <polygon points="20.49,3.51 18.9,6.04 17.96,5.1"/>
+          <polygon points="3.51,20.49 5.1,17.96 6.04,18.9"/>
         </svg>
         <span>${shop.name}</span>
       `;
