@@ -2,7 +2,7 @@
 
 このドキュメントでは、テスト実行時の外部サイトへのアクセス方針を定義します。
 
-## robots.txt 調査結果（2026-02-06）
+## robots.txt 調査結果（2026-02-09）
 
 ### EDHREC (`https://edhrec.com/robots.txt`)
 
@@ -18,29 +18,65 @@ Disallow: /deckpreview/
 - Crawl-delay の指定なし
 - ただし、これはクローラー向けの設定であり、テスト自動化を明示的に許可しているわけではない
 
+**利用規約:** https://edhrec.com/terms
+
 ### 晴れる屋 (`https://www.hareruyamtg.com/robots.txt`)
 
 ```
 User-agent: *
 Allow: /
 Disallow: /news/
-Disallow: /en/
-Disallow: /zh-cn/
-Disallow: /search_result.html
-Disallow: /download/
-Disallow: /*.csv
+Disallow: /jp/k/
+Disallow: /index.php/
+Disallow: /a/*
+Disallow: /ja/forward/
+Disallow: /en/forward/
+Disallow: /ja/purchase/forward/
+Disallow: /en/purchase/forward/
+Disallow: /ja/events/*/*/
+Disallow: /purchase/g/*
+Disallow: /*.csv$
+Disallow: /en/deck/download/*
+Disallow: /ja/deck/download/*
+Disallow: /ja/deck/bulk/*
+Disallow: /en/deck/bulk/*
+Disallow: /ja/deck/result?*
+Disallow: /en/deck/result?*
+Disallow: /ja/events/list?*page=*
+Disallow: /en/events/list?*page=*
+Disallow: /ja/products/search?*page=*
+Disallow: /ja/products/search?*sort=*
+Disallow: /ja/products/search?*order=*
+Disallow: /en/products/search?*page=*
+Disallow: /en/products/search?*sort=*
+Disallow: /en/products/search?*order=*
+Disallow: /ja/purchase/search?*page=*
+Disallow: /ja/purchase/search?*sort=*
+Disallow: /ja/purchase/search?*order=*
+Disallow: /en/purchase/search?*page=*
+Disallow: /en/purchase/search?*sort=*
+Disallow: /en/purchase/search?*order=*
 
 User-agent: bingbot
-Crawl-delay: 30
+Crawl-Delay: 30
+
+User-agent: msnbot
+Crawl-Delay: 30
+
+User-agent: AhrefsBot
+Crawl-Delay: 60
 
 User-agent: SemrushBot
-Crawl-delay: 120
+Crawl-Delay: 120
 ```
 
 **評価:**
-- `/search_result.html` は禁止されているが、E2E テストでアクセスする `/ja/products/search` は異なるパス
-- Bingbot には 30 秒の Crawl-delay → サイトは負荷に敏感な可能性
-- `/ja/products/search` は明示的に禁止されていない
+- 検索ページのページネーション・ソート・並び順パラメータが明示的に禁止: `?*page=*`, `?*sort=*`, `?*order=*`
+- 拡張機能が生成する `?product=カード名` パラメータは禁止パターンに該当しない
+- 複数のボットに対して Crawl-delay を設定（30〜120秒）→ サイトは負荷に敏感
+- `/ja/products/search?product=...` は明示的に禁止されていない
+
+**利用規約:** https://www.hareruyamtg.com/en/user_data/rules
 
 ---
 
