@@ -15,43 +15,51 @@ EDHRECのカードページに日本のMTGショップ（晴れる屋）への�
 - Edge
 - Safari（iOS含む）
 
-## インストール
+## ダウンロード & インストール
+
+[GitHub Releases](https://github.com/reonyanarticle/edhrec-planarbridge/releases) から対応ブラウザの zip ファイルをダウンロードしてインストールします。
 
 ### Chrome
 
-1. このリポジトリをクローン
-2. 依存関係をインストール: `pnpm install`
-3. ビルド: `pnpm build`
-4. Chrome で `chrome://extensions` を開く
-5. 「デベロッパーモード」を有効化
-6. 「パッケージ化されていない拡張機能を読み込む」をクリック
-7. `.output/chrome-mv3` フォルダを選択
+1. Releases から `edhrec-planarbridge-x.x.x-chrome.zip` をダウンロード
+2. zip を解凍
+3. Chrome で `chrome://extensions` を開く
+4. 「デベロッパーモード」を有効化
+5. 「パッケージ化されていない拡張機能を読み込む」→ 解凍したフォルダを選択
 
 ### Firefox
 
-1. ビルド: `pnpm build:firefox`
-2. Firefox で `about:debugging#/runtime/this-firefox` を開く
-3. 「一時的なアドオンを読み込む」をクリック
-4. `.output/firefox-mv2/manifest.json` を選択
+1. Releases から `edhrec-planarbridge-x.x.x-firefox.zip` をダウンロード
+2. Firefox で `about:addons` を開く
+3. 歯車アイコン →「ファイルからアドオンをインストール」→ zip ファイルを選択
+
+> **注意**: 署名なしのアドオンは通常の Firefox ではインストールできません。`about:debugging#/runtime/this-firefox` から「一時的なアドオンを読み込む」で zip を選択してください（ブラウザ再起動で無効になります）。
 
 ### Edge
 
-1. ビルド: `pnpm build:edge`
-2. Edge で `edge://extensions` を開く
-3. 「開発者モード」を有効化
-4. 「展開して読み込み」をクリック
-5. `.output/edge-mv3` フォルダを選択
+1. Releases から `edhrec-planarbridge-x.x.x-edge.zip` をダウンロード
+2. zip を解凍
+3. Edge で `edge://extensions` を開く
+4. 「開発者モード」を有効化
+5. 「展開して読み込み」→ 解凍したフォルダを選択
 
-### Safari
+### Safari (macOS)
 
-1. ビルド: `pnpm build --browser safari`
-2. Xcode でプロジェクト生成:
+Safari は zip 配布に対応していないため、ソースからのビルドが必要です。
+
+1. リポジトリをクローンしてビルド（[開発](#開発)セクション参照）
+2. Xcode プロジェクトを生成:
    ```bash
    xcrun safari-web-extension-converter .output/safari-mv3
    ```
 3. Xcode でビルド・実行
 
-※ Safari 対応には Xcode.app のインストールが必要です。
+※ Xcode.app のインストールが必要です。
+
+### Safari (iOS)
+
+- Apple Developer アカウントが必要です
+- macOS で Safari 版をビルドし、TestFlight 経由で配布してください
 
 ## 使い方
 
@@ -68,6 +76,10 @@ EDHRECのカードページに日本のMTGショップ（晴れる屋）への�
 ## 開発
 
 ```bash
+# リポジトリをクローン
+git clone https://github.com/reonyanarticle/edhrec-planarbridge.git
+cd edhrec-planarbridge
+
 # 依存関係のインストール
 pnpm install
 
